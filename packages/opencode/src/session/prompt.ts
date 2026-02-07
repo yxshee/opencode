@@ -870,9 +870,7 @@ export namespace SessionPrompt {
     const parts = await Promise.all(
       input.parts.map(async (part): Promise<MessageV2.Part[]> => {
         if (part.type === "file") {
-          // before checking the protocol we check if this is an mcp resource because it needs special handling
-          if (part.source?.type === "resource") {
-            const { clientName, uri } = part.source
+          const resource = async (clientName: string, uri: string) => {
             log.info("mcp resource", { clientName, uri, mime: part.mime })
 
             const pieces: MessageV2.Part[] = [
@@ -942,7 +940,24 @@ export namespace SessionPrompt {
 
             return pieces
           }
+
+          // before checking the protocol we check if this is an mcp resource because it needs special handling
+          if (part.source?.type === "resource") {
+            return resource(part.source.clientName, part.source.uri)
+          }
+
           const url = new URL(part.url)
+          if (
+            url.protocol !== "data:" &&
+            url.protocol !== "file:" &&
+            url.protocol !== "http:" &&
+            url.protocol !== "https:" &&
+            url.protocol !== "s3:"
+          ) {
+            // Some plugins return MCP resource URLs without source metadata.
+            // Infer MCP client from URI scheme (exa://... -> client "exa").
+            return resource(url.protocol.slice(0, -1), part.url)
+          }
           switch (url.protocol) {
             case "data:":
               if (part.mime === "text/plain") {
@@ -1166,8 +1181,8 @@ export namespace SessionPrompt {
                 },
               ]
             default:
-              // Unknown protocol - log and return part unchanged to prevent crashes
-              log.warn("unsupported URL protocol for file part", {
+              // For downloadable URLs (http/https/s3), keep original file part.
+              log.info("passing through file part with url protocol", {
                 protocol: url.protocol,
                 url: part.url.slice(0, 100),
               })

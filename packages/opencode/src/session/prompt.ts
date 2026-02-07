@@ -971,16 +971,7 @@ export namespace SessionPrompt {
                   },
                 ]
               }
-              // For non-text data URLs (images, PDFs from clipboard), pass through as-is
-              log.info("data url", { mime: part.mime })
-              return [
-                {
-                  ...part,
-                  id: part.id ?? Identifier.ascending("part"),
-                  messageID: info.id,
-                  sessionID: input.sessionID,
-                },
-              ]
+              break
             case "file:":
               log.info("file", { mime: part.mime })
               // have to normalize, symbol search returns absolute paths
@@ -1164,17 +1155,6 @@ export namespace SessionPrompt {
                   mime: part.mime,
                   filename: part.filename!,
                   source: part.source,
-                },
-              ]
-            default:
-              // Handle unknown protocols gracefully to prevent crashes
-              log.warn("unsupported URL protocol", { protocol: url.protocol, url: part.url.slice(0, 100) })
-              return [
-                {
-                  ...part,
-                  id: part.id ?? Identifier.ascending("part"),
-                  messageID: info.id,
-                  sessionID: input.sessionID,
                 },
               ]
           }

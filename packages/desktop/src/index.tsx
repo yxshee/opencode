@@ -118,7 +118,6 @@ const createPlatform = (): Platform => {
     async openPath(path: string, app?: string) {
       const os = ostype()
       if (os === "windows") {
-        const resolvedApp = (app && (await commands.resolveAppPath(app))) || app
         const resolvedPath = await (async () => {
           if (window.__OPENCODE__?.wsl) {
             const converted = await commands.wslPath(path, "windows").catch(() => null)
@@ -127,6 +126,8 @@ const createPlatform = (): Platform => {
 
           return path
         })()
+        if (!app) return commands.openPathWindows(resolvedPath).then(() => undefined)
+        const resolvedApp = (await commands.resolveAppPath(app)) || app
         return openerOpenPath(resolvedPath, resolvedApp)
       }
       return openerOpenPath(path, app)

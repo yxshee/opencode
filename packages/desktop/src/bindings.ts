@@ -18,6 +18,7 @@ export const commands = {
 	checkAppExists: (appName: string) => __TAURI_INVOKE<boolean>("check_app_exists", { appName }),
 	wslPath: (path: string, mode: "windows" | "linux" | null) => __TAURI_INVOKE<string>("wsl_path", { path, mode }),
 	resolveAppPath: (appName: string) => __TAURI_INVOKE<string | null>("resolve_app_path", { appName }),
+	openPathWindows: (path: string) => __TAURI_INVOKE<null>("open_path_windows", { path }),
 };
 
 /** Events */
@@ -62,4 +63,3 @@ function makeEvent<T>(name: string) {
 
     return Object.assign(fn, base);
 }
-

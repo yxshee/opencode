@@ -322,6 +322,25 @@ fn resolve_app_path(app_name: &str) -> Option<String> {
     }
 }
 
+#[tauri::command]
+#[specta::specta]
+fn open_path_windows(path: &str) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        Command::new("cmd")
+            .args(["/C", "start", "", path])
+            .spawn()
+            .map(|_| ())
+            .map_err(|err| format!("Failed to open path: {}", err))
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = path;
+        Err("open_path_windows is only available on Windows".to_string())
+    }
+}
+
 #[cfg(target_os = "macos")]
 fn check_macos_app(app_name: &str) -> bool {
     // Check common installation locations
@@ -516,7 +535,8 @@ fn make_specta_builder() -> tauri_specta::Builder<tauri::Wry> {
             markdown::parse_markdown_command,
             check_app_exists,
             wsl_path,
-            resolve_app_path
+            resolve_app_path,
+            open_path_windows
         ])
         .events(tauri_specta::collect_events![
             LoadingWindowComplete,
